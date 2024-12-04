@@ -8,7 +8,7 @@ export const fetchNEOs = async () => {
         const response = await axios.get(`${API_URL}?api_key=${API_KEY}`);
         return response.data.near_earth_objects;
     } catch (error) {
-        console.error('Erreur lors de la récupération des données :', error);
+        console.error('Erreur lors de la récupération des données:', error.response || error.message || error);
         throw error;
     }
 };
