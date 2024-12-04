@@ -1,25 +1,18 @@
-import logo from './logo.svg';
-import './App.css';
+import React from 'react';
+import NeoChart from './components/Chart';
+
 
 function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
+    return (
+        <div className="App">
+            <header className="text-center p-4 bg-blue-500 text-white">
+                <h1>NASA Near Earth Objects</h1>
+            </header>
+            <main className="p-4">
+                <NeoChart />
+            </main>
+        </div>
+    );
 }
 
 export default App;
