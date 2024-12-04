@@ -16,8 +16,9 @@ const FilterDropdown = ({ orbitalBodies, selectedOrbit, onFilterChange }) => {
 
   // Filter orbit options based on the search term
   const filteredBodies = orbitalBodies.filter((body) =>
-    body.toLowerCase().includes(searchTerm.toLowerCase())
+    body && body.toLowerCase().includes(searchTerm.toLowerCase())
   );
+  
 
   return (
     <div className="relative w-full">

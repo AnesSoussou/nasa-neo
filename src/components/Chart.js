@@ -1,53 +1,45 @@
 /**
- * NeoChart Component
- * 
- * This component fetches data from NASA's API regarding Near-Earth Objects (NEOs)
- * and displays a bar chart representing their estimated diameters. 
- * The chart allows users to filter the NEOs by the selected orbiting body, 
- * which updates the chart accordingly to show only the relevant data.
+ * Fetches data about Near-Earth Objects (NEOs) from NASA's API and displays them as a bar chart or table, 
+ * allowing the user to filter by orbital body (e.g., Earth, Mars) and toggle between chart and table views.
  */
 
-
-import React, { useEffect, useState } from "react";
-import { Chart } from "react-google-charts";
-import { fetchNEOs } from "../services/api";
-import FilterDropdown from "./Filter";
+import React, { useEffect, useState } from 'react';
+import { Chart } from 'react-google-charts';
+import { fetchNEOs } from '../services/api';
+import Filter from './Filter';
+import TableView from './TableView';
 
 const NeoChart = () => {
   const [data, setData] = useState([]);
-  const [filteredData, setFilteredData] = useState([]);
-  const [orbitalBodies, setOrbitalBodies] = useState([]); // List of orbits
-  const [selectedOrbit, setSelectedOrbit] = useState("");
+  const [filteredData, setFilteredData] = useState([]); 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [orbitalBodies, setOrbitalBodies] = useState([]); 
+  const [selectedBody, setSelectedBody] = useState(''); 
+  const [view, setView] = useState('chart');
 
+ // Recuperate Data via API
   useEffect(() => {
     const getData = async () => {
       try {
         const neoData = await fetchNEOs();
 
-        // Prepare the data for the chart
-        const chartData = neoData
-          .map((neo) => [
-            neo.name,
-            neo.estimated_diameter.kilometers.estimated_diameter_min,
-            neo.estimated_diameter.kilometers.estimated_diameter_max,
-            neo.close_approach_data[0]?.orbiting_body || "Unknown",
-          ])
-          .sort(
-            (a, b) =>
-              (b[1] + b[2]) / 2 - (a[1] + a[2]) / 2 // Trier par diamètre moyen décroissant
-          );
+        
+        const chartData = neoData.map((neo) => [
+          neo.name,
+          neo.estimated_diameter.kilometers.estimated_diameter_min,
+          neo.estimated_diameter.kilometers.estimated_diameter_max,
+          neo.close_approach_data[0]?.orbiting_body || 'Unknown', // Adding Default value
+        ]);
 
-        const allOrbitalBodies = [
-          ...new Set(chartData.map((item) => item[3])),
-        ].sort();
+        // Extract unique celestial bodies (all available celestial bodies)
+        const bodies = [...new Set(chartData.map((item) => item[3]))].sort();
 
-        setData([["Name", "Min Diameter", "Max Diameter", "Orbit"], ...chartData]);
-        setFilteredData(chartData.map((item) => item.slice(0, 3))); // Exclure la colonne Orbit
-        setOrbitalBodies(allOrbitalBodies);
+        setData([['Name', 'Min Diameter', 'Max Diameter', 'Orbit'], ...chartData]);
+        setFilteredData(chartData);
+        setOrbitalBodies(bodies); // Store the orbits
       } catch (err) {
-        setError("Unable to load the data.");
+        setError('Unable to load the data.');
       } finally {
         setLoading(false);
       }
@@ -56,47 +48,57 @@ const NeoChart = () => {
     getData();
   }, []);
 
-  const handleFilterChange = (orbit) => {
-    setSelectedOrbit(orbit);
-
-    if (orbit === "") {
-      setFilteredData(data.slice(1).map((item) => item.slice(0, 3))); // Ignore the Orbit column
+  // Update the filtered data when the selected orbit changes
+  useEffect(() => {
+    if (selectedBody) {
+      setFilteredData(data.filter((row) => row[3] === selectedBody));
     } else {
-      const filtered = data
-        .slice(1)
-        .filter((item) => item[3] === orbit)
-        .map((item) => item.slice(0, 3));
-      setFilteredData(filtered);
+      setFilteredData(data);
     }
-  };
+  }, [selectedBody, data]);
 
   if (loading) return <p>Loading...</p>;
   if (error) return <p>{error}</p>;
 
+  const chartHeight = selectedBody === '' ? '600px' : '400px';
+
   return (
     <div className="p-4 space-y-5">
-      <FilterDropdown
-        orbitalBodies={orbitalBodies}
-        selectedOrbit={selectedOrbit}
-        onFilterChange={handleFilterChange}
-      />
+      {/* Switcher between chart and table */}
+      <div className="mb-4">
+        <button
+          onClick={() => setView('chart')}
+          className={`px-4 py-2 mr-2 ${view === 'chart' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
+        >
+          Graph View
+        </button>
+        <button
+          onClick={() => setView('table')}
+          className={`px-4 py-2 ${view === 'table' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
+        >
+          Table View
+        </button>
+      </div>
 
-      {filteredData.length > 0 ? (
+      <Filter orbitalBodies={orbitalBodies} onFilterChange={setSelectedBody} />
+
+      {/* Display according to the selected view */}
+      {view === 'chart' ? (
         <Chart
           chartType="Bar"
-          data={[["Name", "Min Diameter", "Max Diameter"], ...filteredData]}
+          data={[['Name', 'Min Diameter', 'Max Diameter'], ...filteredData.map((row) => row.slice(0, 3))]}
           options={{
-            title: "Estimated diameters of NEOs",
-            chartArea: { width: "60%" },
-            hAxis: { title: "Diameter (km)" },
-            vAxis: { title: "NEO Name" },
-            legend: { position: "top" },
+            title: 'Estimated Diameters of NEOs',
+            chartArea: { width: '60%' },
+            hAxis: { title: 'Diameter (km)' },
+            vAxis: { title: 'NEO Name' },
+            legend: { position: 'top' },
           }}
           width="100%"
-          height="400px"
+          height={chartHeight}
         />
       ) : (
-        <p>No data available for the selected orbit.</p>
+        <TableView data={filteredData} />
       )}
     </div>
   );
