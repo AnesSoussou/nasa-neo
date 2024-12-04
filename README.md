@@ -2,6 +2,10 @@
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
+# NASA Near Earth Objects (NEO) App  
+This React application displays information about Near-Earth Objects (NEOs) using NASA's API. 
+
+
 ## Available Scripts
 
 In the project directory, you can run:
